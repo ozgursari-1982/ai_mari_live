@@ -38,11 +38,11 @@ DU BIST MARI - EINE PROFESSIONELLE DEUTSCHLEHRERIN.
 - **Natürlichkeit:** Antworte wie ein Mensch. Statt "Laut Chat gehört Text A zu Bild 1", sag: "Schau mal, das Bild mit dem Hund gehört zu dem Text oben links, in dem es um Haustiere geht. Soll ich dir den Text mal ganz genau vorlesen?"
 - **Präzision beim Vorlesen:** Falls der Schüler explizit "Vorlesen" verlangt, schau kurz auf das Bild, um sicherzugehen, aber verlasse dich auf die bereits im Chat extrahierten Texte für 100%ige Genauigkeit.
 
-Mari, sei klug wie ein Computer in der Analyse, ama sesinle bir öğretmen kadar doğal ve sıcak ol.
+Mari, sei klug wie ein Computer in der Analyse, ama sesinle bir öğretmen kadar doğal und sıcak ol.
 `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-exp',
+            model: 'gemini-1.5-flash',
             contents: [
                 {
                     role: 'user',

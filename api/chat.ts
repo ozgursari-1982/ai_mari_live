@@ -60,7 +60,7 @@ Mari, sei klug wie ein Computer in der Analyse, ama sesinle bir öğretmen kadar
         });
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash-exp',
+            model: 'gemini-1.5-flash',
             contents,
             config: {
                 systemInstruction: SYSTEM_INSTRUCTION,
