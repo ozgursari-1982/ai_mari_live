@@ -57,33 +57,26 @@ export function createPcmBlob(data: Float32Array): { data: string; mimeType: str
 }
 
 export class GeminiService {
-  constructor() {}
+  constructor() { }
 
   // Initial deep analysis: Verbatim extraction and problem solving from images
   async analyzeDocumentInitially(currentDoc: any) {
     if (!currentDoc?.data) return null;
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: [
-          { role: 'user', parts: [
-            { inlineData: { data: currentDoc.data, mimeType: currentDoc.type } },
-            { text: `Führe eine EXKLUSIVE MASTER-ANALYSE dieses Bildes durch:
-            1. Scanne das Bild und extrahiere ALLE Texte EXAKT WORTGETREU. Keine Zusammenfassungen!
-            2. Identifiziere alle visuellen Elemente und Bilder im Screenshot.
-            3. Löse die Aufgabe (Matching): Welcher Text gehört zu welchem Element? Erkläre dies präzise.
-            4. Liste am Ende alle extrahierten Texte noch einmal separat auf, damit ich sie als Datenbank nutzen kann.
-            5. Frage mich dann auf Deutsch: "Soll ich dir beim ersten Punkt helfen oder möchtest du etwas Bestimmtes wissen?"` }
-          ] }
-        ],
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          thinkingConfig: { thinkingBudget: 28000 },
-          temperature: 0.0
-        }
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ document: currentDoc })
       });
-      return response.text;
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.text;
     } catch (error) {
       console.error("Initial Analysis Error:", error);
       return null;
@@ -93,29 +86,24 @@ export class GeminiService {
   // Handle standard text chat with history and document context
   async sendChatMessage(message: string, currentDoc: any, history: any[] = []) {
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const contents: any[] = history.map(m => ({
-        role: m.role,
-        parts: [{ text: m.text }]
-      }));
-      
-      contents.push({
-        role: 'user',
-        parts: currentDoc?.data 
-          ? [{ inlineData: { data: currentDoc.data, mimeType: currentDoc.type } }, { text: message }]
-          : [{ text: message }]
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message,
+          document: currentDoc,
+          history
+        })
       });
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          thinkingConfig: { thinkingBudget: 15000 },
-          temperature: 0.0
-        }
-      });
-      return response.text;
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.text;
     } catch (error) {
       console.error("Gemini Chat Error:", error);
       return "Es gab ein Problem. Können wir es nochmal versuchen?";
@@ -125,8 +113,8 @@ export class GeminiService {
   // Connect to Live API: Focus on personality using Chat History as "The Truth"
   connectLive(currentDoc: any, chatHistory: any[], callbacks: any) {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
-    const historyContext = chatHistory.length > 0 
+
+    const historyContext = chatHistory.length > 0
       ? `\n\n### DEINE MASTER-DATENBANK (CHAT-HISTORIE):\n${chatHistory.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n')}`
       : "";
 
